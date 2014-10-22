@@ -15,6 +15,7 @@ from fdasrsf.fPLS import pls_svd
 import fdasrsf.plot_style as plot
 import fpls_warp as fpls
 import collections
+import warnings
 
 
 def srsf_align(f, time, method="mean", showplot=True, smoothdata=False,
@@ -537,6 +538,39 @@ def srsf_align_pair(f, g, time, method="mean", showplot=True,
     out = align_results(fn, gn, qfn, qf0, qgn, qg0, fmean, gmean, mqfn,
                         mqgn, gam)
     return out
+
+
+def srsf_bayes_align_pair(f, g, iter=15000, times=5, tau=np.ceil(time*0.4),
+        powera=1, showplot=True, smooth=False):
+    # Default settings shall work for many situations. If convergence issues
+    # arise then adjust propsoal variance tau
+    if times == 2:
+        warnings.warn("Small times may lead to convergence issues")
+
+    burnin = None
+    kappa = 1000
+    thin = 1
+    cut = 5*times
+    alpha = 1
+    beta = 0.001
+    scale = True
+
+    timet = np.linspace(0, 1, len(f))
+    q_f = uf.f_to_srsf(f, time, smooth)
+    q_g = uf.f_to_srsf(g, time, smooth)
+    p = len(q_f)
+    if np.mod(p,times)!=0:
+        raise Exception("Number of points on q function = %d is not a multiple
+        of times = %d." % (p, times))
+    L = np.round(len(qf)/float(times))
+    row = times * np.linspace(0, L-1, L) + 1
+    if scale:
+        rescale = np.sqrt(p/np.sum(q_f**2))
+        q_f *= rescale
+        rescale = np.sqrt(p/np.sum(q_g**2))
+        q_g *= rescale
+
+    res
 
 
 def align_fPCA(f, time, num_comp=3, showplot=True, smoothdata=False):
