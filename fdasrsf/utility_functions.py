@@ -12,8 +12,8 @@ from scipy.stats.mstats import mquantiles
 from numpy import zeros, interp, finfo, double, sqrt, diff, linspace
 from numpy import arccos, sin, cos, arange, ascontiguousarray, round
 from numpy import ones, real, pi, cumsum, fabs, cov, diagflat, inner
-from numpy import gradient, column_stack, append
-from numpy import insert, vectorize
+from numpy import gradient, column_stack, append, newaxis
+from numpy import insert, vectorize, iscomplex, diag
 import numpy.random as rn
 import optimum_reparamN as orN
 import sys
@@ -712,3 +712,14 @@ def resamplefunction(x, n):
     T = x.shape[0]
     xn = interp(arange(0, n)/double(n-1), arange(0, T)/double(T-1), x)
     return(xn)
+
+
+def Enorm(X):
+    if X.ndim == 1:
+        X = X[newaxis, :]
+    if iscomplex(X):
+        n = sqrt(real(diag(X.conjugate().T.dot(X))))
+    else:
+        n = sqrt(diag(X.T.dot(X)))
+
+    return(n)

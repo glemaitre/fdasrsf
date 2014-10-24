@@ -14,6 +14,7 @@ from joblib import Parallel, delayed
 from fdasrsf.fPLS import pls_svd
 import fdasrsf.plot_style as plot
 import fpls_warp as fpls
+import cbayes as cb
 import collections
 import warnings
 
@@ -540,7 +541,7 @@ def srsf_align_pair(f, g, time, method="mean", showplot=True,
     return out
 
 
-def srsf_bayes_align_pair(f, g, iter=15000, times=5, tau=np.ceil(time*0.4),
+def srsf_bayes_align_pair(f, g, iters=15000, times=5, tau=np.ceil(time*0.4),
         powera=1, showplot=True, smooth=False):
     # Default settings shall work for many situations. If convergence issues
     # arise then adjust propsoal variance tau
@@ -570,7 +571,24 @@ def srsf_bayes_align_pair(f, g, iter=15000, times=5, tau=np.ceil(time*0.4),
         rescale = np.sqrt(p/np.sum(q_g**2))
         q_g *= rescale
 
-    res
+    MatchIn2 = cb.DP(q_f, q_g, times, cut)[0]
+    match = np.append(MatchIn2, p+1)
+    match_collect = np.zeros(iters/float(thin), L+1)
+    best_match = match_collect.copy()
+    dist = None
+    dist_collect = np.zeros(iters+1)
+    time0 = np.linspace(1, p, p)
+    idy = np.round(np.interp(time0, np.append(row, p+1), match))
+    idy[idy > p] = p
+    scale = np.sqrt(np.diff(match)*(1/float(times)))
+    scalevec = np.repeat(scale, times)
+    dist = (uf.Enorm(q_f-scalevec*(q_g[idy])))**2/float(p)
+    dist_collect[0] = dist
+    dist_min = dist
+    kappa_collect = np.zeros(iters)
+    log_collect = np.zeros(iters)
+
+    res = simuiter
 
 
 def align_fPCA(f, time, num_comp=3, showplot=True, smoothdata=False):

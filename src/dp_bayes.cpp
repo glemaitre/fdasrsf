@@ -21,11 +21,11 @@ dp_result dp_bayes(vec q1, vec q1L, vec q2L, int times, int cut){
     uvec tempspan1(q2LLlen);
     tempspan1.fill(0);
     tempspan1 = seq_len(q2LLlen);
-    vec temp_span2 = as<vec>(tempspan1);
+    vec temp_span2 = conv_to<vec>::from(tempspan1);
     float timesf = (float)(times);
     vec q2LL_time = temp_span2*(1/timesf);
     uvec q2L_time1 = seq_len(colnum);
-    vec q2L_time2 = as<vec>(q2L_time1);
+    vec q2L_time2 = conv_to<vec>::from(q2L_time1);
     q2LL = approx(colnum,q2L_time2,q2L,q2LLlen,q2LL_time);
     mat ID(rownum+1,colnum+1);
     ID.fill(0);
@@ -40,7 +40,7 @@ dp_result dp_bayes(vec q1, vec q1L, vec q2L, int times, int cut){
     uvec intery(times-1);
     intery.fill(0);
     uvec span1 = seq_len(times-1)+1;
-    vec span2 = as<vec>(span1);
+    vec span2 = conv_to<vec>::from(span1);
     vec q1x(times-1);
     q1x.fill(0);
     vec q2y(times-1);
@@ -58,7 +58,7 @@ dp_result dp_bayes(vec q1, vec q1L, vec q2L, int times, int cut){
             tmp << j-1 << cut*(i-1);
             end   = min(tmp);
             uvec n = start+seq_len(end-start+1);
-            k = n.n_elem();
+            k = n.n_elem;
             interx = times*(i-1)+span1;
             vec Energy(k);
 
@@ -85,16 +85,17 @@ dp_result dp_bayes(vec q1, vec q1L, vec q2L, int times, int cut){
         }
     }
 
+    uvec tmp(2);
     int i = rownum;
     int j = colnum;
     tmp << i-1 << j-cut;
     start = max(tmp);
-    tmp << j-1 << cut*(i-1)
-    end   = min(tmp);
+    tmp << j-1 << cut*(i-1);
+    end = min(tmp);
     uvec n = start+seq_len(end-start+1);
-    k = n.n_elem();
+    k = n.n_elem;
     interx = times*(i-1)+span1;
-    span2 = as<vec>(span1);
+    span2 = conv_to<vec>::from(span1);
     vec Energy(k);
 
     for(int m = 0; m < k ; m++)
@@ -132,8 +133,8 @@ dp_result dp_bayes(vec q1, vec q1L, vec q2L, int times, int cut){
 
     dp_result out;
     out.J = path+1;
-    out.NDist = S(rownum,colnum)/colnum
-    out.q2LL = q2LL
+    out.NDist = S(rownum,colnum)/colnum;
+    out.q2LL = q2LL;
 
     return out;
 }

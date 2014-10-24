@@ -5,7 +5,6 @@ from distutils.core import Command
 from distutils.extension import Extension
 from Cython.Distutils import build_ext
 from Cython.Build import cythonize
-from cyarma import include_dir as arma_inc_dir
 
 # Make sure I have the right Python version.
 if sys.version_info[:2] < (2, 6):
@@ -70,7 +69,7 @@ extensions = [
     ),
     Extension(name="cbayes",
         sources=["src/cbayes.pyx", "src/dp_bayes.cpp", "src/bayes_funcs.cpp"],
-        include_dirs=[numpy.get_include(), '/usr/include', '/usr/local/include', arma_inc_dir],
+        include_dirs=[numpy.get_include(), '/usr/include', '/usr/local/include'],
         library_dirs = ['/usr/lib', '/usr/local/lib'],
         libraries=["armadillo"],
         language="c++",

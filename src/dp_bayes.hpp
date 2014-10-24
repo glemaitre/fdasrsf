@@ -1,8 +1,10 @@
+#include "armadillo"
+
 struct dp_result {
-    uvec J;
+    arma::uvec J;
     double NDist;
-    vec q2LL;
+    arma::vec q2LL;
 };
 
-dp_result dp_bayes(vec q1, vec q1L, vec q2L, int times, int cut);
+dp_result dp_bayes(arma::vec q1, arma::vec q1L, arma::vec q2L, int times, int cut);
 

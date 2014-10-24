@@ -1,7 +1,7 @@
 import numpy as np
 cimport numpy as np
 
-include "cyarma.pyx"
+include "armapy.pxi"
 
 cdef extern from "dp_bayes.hpp":
     cdef struct dp_result:
@@ -13,11 +13,14 @@ cdef extern from "dp_bayes.hpp":
 
 
 def DP(np.ndarray[double, ndim=1, mode="c"] q1,np.ndarray[double, ndim=1, mode="c"] q2, np.ndarray[double, ndim=1, mode="c"] q2L, int times, int cut):
-    cdef vec *q1a = numpy_to_vec(q1)
-    cdef vec *q2a = numpy_to_vec(q2)
-    cdef vec *q2La = numpy_to_vec(q2L)
+    cdef vec q1a = dndtovec(q1)
+    cdef vec q2a = dndtovec(q2)
+    cdef vec q2La = dndtovec(q2L)
 
     cdef dp_result result
     result = dp_bayes(q1a, q2a, q2La, times, cut)
 
-    return(result.J, result.NDist, result.q2LL)
+    cdef np.ndarray[double, ndim=1] q2LL=dvectond(result.q2LL)
+    cdef np.ndarray[int, ndim=1] J=duvectond(result.J)
+
+    return(J, result.NDist, q2LL)
