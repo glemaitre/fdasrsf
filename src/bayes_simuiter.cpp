@@ -1,4 +1,5 @@
 #include <iostream>
+#include <random>
 #include "armadillo"
 #include "bayes_funcs.hpp"
 
@@ -8,14 +9,14 @@ using namespace std;
 struct simu_result {
     vec best_match;
     mat match_collect;
-    vec dist_collect; 
+    vec dist_collect;
     vec kappafamily;
     vec log_posterior;
     float dist_min;
-}
+};
 
-void simuiter(int iter, int p, vec qt1_5, vec qt2_5, int L, float tau, int times, float kappa, float alpha, float beta, float powera, float dist, float dist_min, vec best_match, vec match, int thin, int cut){
-    
+simu_result simuiter(int iter, int p, vec qt1_5, vec qt2_5, int L, float tau, int times, float kappa, float alpha, float beta, float powera, float dist, float dist_min, vec best_match, vec match, int thin, int cut){
+
     uvec Ixout(2*times);
     uvec Ioriginal(L+1);
     float increment,n_dist,o_dist,adjustcon,ratio,prob,u,logpost;
@@ -124,11 +125,17 @@ void simuiter(int iter, int p, vec qt1_5, vec qt2_5, int L, float tau, int times
         gamma_distribution<float> rgamma(p/2+alpha, 1/(dist+beta));
         kappa = rgamma(generator);
         kappa_collect[j] = kappa;
-logpost = (p/2+alpha)*log(kappa)-kappa*(beta+dist);
-log_collect[j] = logpost;
-}
-vec Rr_best_match = best_match+1;
-mat Rr_match_collect = match_collect+1;
+        logpost = (p/2+alpha)*log(kappa)-kappa*(beta+dist);
+        log_collect[j] = logpost;
+    }
 
-    
+    simu_result out;
+    out.best_match = best_match;
+    out.match_collect = match_collect;
+    out.dist_collect = dist_collect;
+    out.kappafamily = kappa_collect;
+    out.log_posterior = log_collect;
+    out.dist_min = dist_min;
+
+    return out;
 }

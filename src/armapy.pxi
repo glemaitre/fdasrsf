@@ -2,6 +2,7 @@ from cpython.version cimport PY_MAJOR_VERSION
 import numpy as n
 cimport numpy as n
 
+from libcpp cimport bool
 
 cdef extern from "string" namespace "std":
     cdef cppclass string:
@@ -26,6 +27,47 @@ cdef extern from "<armadillo>" namespace "arma":
         void zeros()
         double* memptr()
         int size()
+
+    cdef cppclass mat:
+        mat(double* aux_mem, int n_rows, int n_cols, bool copy_aux_mem, bool strict)
+        mat(double* aux_mem, int n_rows, int n_cols)
+        mat(int n_rows, int n_cols)
+        mat() nogil
+        # attributes
+        int n_rows
+        int n_cols
+        int n_elem
+        int n_slices
+        int n_nonzero
+        # fuctions
+        mat i()  #inverse
+        mat t()  #transpose
+        vec diag()
+        vec diag(int)
+        fill(double)
+        void raw_print(char*)
+        void raw_print()
+        vec unsafe_col(int)
+        vec col(int)
+        #print(char)
+        #management
+        mat reshape(int, int)
+        mat resize(int, int)
+        double* memptr()
+        # opperators
+        double& operator[](int)
+        double& operator[](int,int)
+        double& at(int,int)
+        double& at(int)
+        mat operator*(mat)
+        mat operator%(mat)
+        vec operator*(vec)
+        mat operator+(mat)
+        mat operator*(double)
+        mat operator-(double)
+        mat operator+(double)
+        mat operator/(double)
+
     cdef cppclass uvec:
         uvec(int)
         uvec(us*,int,bool,bool)
@@ -35,6 +77,7 @@ cdef extern from "<armadillo>" namespace "arma":
         void zeros()
         us* memptr()
         int size()
+
     cdef cppclass cx_vec:
         cx_vec(int)
         cx_vec()
@@ -47,6 +90,7 @@ cdef extern from "<armadillo>" namespace "arma":
 
     vec real(cx_vec)
     vec imag(cx_vec)
+
 ctypedef cx_vec vc
 ctypedef vec vd
 ctypedef complex[double] c
@@ -62,6 +106,7 @@ cdef cx_vec cndtovec(n.ndarray[n.complex128_t,ndim=1] ndarr):
     varr.set_real(varrR)
     varr.set_imag(varrI)
     return varr
+
 cdef vd dndtovec(n.ndarray[n.float64_t,ndim=1] ndarr):
     cdef int size=ndarr.shape[0]
     cdef vd varr
@@ -104,22 +149,13 @@ cdef n.ndarray dvectond(vd varr):
 #   print('array content in Cython: ' + repr(result))
     return result
 
+cdef np.ndarray[np.double_t, ndim=2] dmattond(mat X):
+    cdef int n_rows = X.n_rows
+    cdef int n_cols = X.n_cols
+    cdef int size = n_rows*n_cols
+    cdef n.float_t* data = X.memptr()
+    cdef n.float64_t[:, :] data_view = <n.float64_t[:n_rows, :n_cols]> data
+    cdef n.ndarray[n.float64_t, ndim=2, mode='c'] result
+    result = 1.0*n.asarray(data_view, dtype=n.float64, order='C')
+    return result
 
-
-cdef unicode _ustring(s):
-    if type(s) is unicode:
-        # fast path for most common case(s)
-        return <unicode>s
-    elif PY_MAJOR_VERSION < 3 and isinstance(s, bytes):
-        # only accept byte strings in Python 2.x, not in Py3
-        return (<bytes>s).decode('ascii')
-    elif isinstance(s, unicode):
-        # an evil cast to <unicode> might work here in some(!) cases,
-        # depending on what the further processing does.  to be safe,
-        # we can always create a copy instead
-        return unicode(s)
-    else:
-        raise TypeError(...)
-
-cdef pyxstring(string):
-        return _ustring(string).encode()

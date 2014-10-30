@@ -96,8 +96,27 @@ def f_to_srsf(f, time, smooth=False):
     """
     eps = finfo(double).eps
     f0, g, g2 = gradient_spline(time, f, smooth)
-    q = g / sqrt(abs(g) + eps)
+    q = g / sqrt(fabs(g) + eps)
     return q
+
+
+def srsf_to_f(q, time):
+    """
+    converts q a square-root slope function (SRSF) to a function
+
+    :param q: vector of size N samples
+    :param time: vector of size N describing the sample points
+
+    :rtype: vector
+    :return f:
+
+    """
+    m = len(q)
+    f = zeros(m+1)
+    for i in xrange(1, m+1):
+        f[i] = q[i-1]*fabs(q[i-1])*(time[i]-time[i-1])+f[i-1]
+
+    return f
 
 
 def optimum_reparam(q1, time, q2, lam=0.0):

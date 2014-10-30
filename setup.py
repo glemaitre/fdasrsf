@@ -68,10 +68,12 @@ extensions = [
         language="c",
     ),
     Extension(name="cbayes",
-        sources=["src/cbayes.pyx", "src/dp_bayes.cpp", "src/bayes_funcs.cpp"],
+        sources=["src/cbayes.pyx", "src/dp_bayes.cpp", "src/bayes_funcs.cpp",
+            "src/bayes_simuiter.cpp"],
         include_dirs=[numpy.get_include(), '/usr/include', '/usr/local/include'],
         library_dirs = ['/usr/lib', '/usr/local/lib'],
         libraries=["armadillo"],
+        extra_compile_args=["-std=c++11"],
         language="c++",
     )
 ]

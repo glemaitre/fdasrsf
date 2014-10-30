@@ -132,7 +132,7 @@ dp_result dp_bayes(vec q1, vec q1L, vec q2L, int times, int cut){
     }
 
     dp_result out;
-    out.J = path+1;
+    out.J = path;
     out.NDist = S(rownum,colnum)/colnum;
     out.q2LL = q2LL;
 

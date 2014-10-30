@@ -8,6 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import fdasrsf.utility_functions as uf
 from scipy.integrate import trapz, cumtrapz
+from scipy.interpolate import interp1d
 from scipy.linalg import svd
 from numpy.linalg import norm
 from joblib import Parallel, delayed
@@ -541,8 +542,8 @@ def srsf_align_pair(f, g, time, method="mean", showplot=True,
     return out
 
 
-def srsf_bayes_align_pair(f, g, iters=15000, times=5, tau=np.ceil(time*0.4),
-        powera=1, showplot=True, smooth=False):
+def srsf_bayes_align_pair(f, g, time, iters=15000, times=5, tau=np.ceil(times*0.4),
+                          powera=1, showplot=True, smooth=False):
     # Default settings shall work for many situations. If convergence issues
     # arise then adjust propsoal variance tau
     if times == 2:
@@ -560,10 +561,9 @@ def srsf_bayes_align_pair(f, g, iters=15000, times=5, tau=np.ceil(time*0.4),
     q_f = uf.f_to_srsf(f, time, smooth)
     q_g = uf.f_to_srsf(g, time, smooth)
     p = len(q_f)
-    if np.mod(p,times)!=0:
-        raise Exception("Number of points on q function = %d is not a multiple
-        of times = %d." % (p, times))
-    L = np.round(len(qf)/float(times))
+    if np.mod(p, times) != 0:
+        raise Exception("Number of points on q function = %d is not a multiple of times = %d." % (p, times))
+    L = np.round(len(q_f)/float(times))
     row = times * np.linspace(0, L-1, L) + 1
     if scale:
         rescale = np.sqrt(p/np.sum(q_f**2))
@@ -577,7 +577,7 @@ def srsf_bayes_align_pair(f, g, iters=15000, times=5, tau=np.ceil(time*0.4),
     best_match = match_collect.copy()
     dist = None
     dist_collect = np.zeros(iters+1)
-    time0 = np.linspace(1, p, p)
+    time0 = np.linspace(0, p-1, p)
     idy = np.round(np.interp(time0, np.append(row, p+1), match))
     idy[idy > p] = p
     scale = np.sqrt(np.diff(match)*(1/float(times)))
@@ -588,7 +588,47 @@ def srsf_bayes_align_pair(f, g, iters=15000, times=5, tau=np.ceil(time*0.4),
     kappa_collect = np.zeros(iters)
     log_collect = np.zeros(iters)
 
-    res = simuiter
+    res = cb.simuiterb(iters, p, q_f, q_g, L, tau, times, kappa, alpha, beta,
+                       powera, dist, dist_min, best_match, match, thin, cut)
+
+    best_match = res['best_match']
+    match_collect = res['match_collect']
+    dist_min = res['dist_min']
+    log_posterior = res['log_posterior']
+    dist_collect = res['dist_collect']
+    kappafamily = res['kappafamily']
+    bestidy = np.interp(time0, np.append(row, p+1), best_match)
+    bestidy[bestidy > p] = p
+    bestidy = np.append(bestidy, p+1)
+    burnin = np.round(0.5*iters/float(thin))
+    LowerP = np.zeros(L+1)
+    UpperP = np.zeros_like(LowerP)
+    MeanP = np.zeros_like(LowerP)
+
+    for i in xrange(1, L+1):
+        tmpdata = match_collect[burnin:(iters/float(thin)), i]
+        LowerP[i] = np.percentile(tmpdata, 0.025)
+        UpperP[i] = np.percentile(tmpdata, 0.975)
+        MeanP[i] = match_collect[burnin:(iters/float(thin)), i].mean()
+
+    Meanidy = np.interp(time0, np.append(row, p+1), MeanP)
+    Meanidy[Meanidy > p] = p
+    Meanidy = np.append(Meanidy, p+1)
+
+    reg_q_f = interp1d(np.linspace(0, p, p+1), input2, kind='cubic')
+    reg_q = reg_q_f(np.linspace(input2.min(), inpu2.max(), times*(p+1)-1))
+    reg_q = req_q[bestidy*times+1]
+    reg_a_f = interp1d(np.linspace(0, p, p+1), input2, kind='cubic')
+    reg_a = reg_a_f(np.linspace(input2.min(), inpt2.max(), times*(p+1)-1))
+    reg_a = reg_a[Meanidy*times+1]
+
+    if showplot:
+        f = np.hstack((f, g))
+        plot.f_plot(timet, f, title="Original Curves")
+
+        plot.f_plot(
+        plt.show()
+
 
 
 def align_fPCA(f, time, num_comp=3, showplot=True, smoothdata=False):
